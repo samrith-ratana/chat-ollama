@@ -1,0 +1,8 @@
+# Core Dependencies
+requests==2.31.0          # HTTP requests for Ollama API
+flask==3.0.0              # Web framework for API
+flask-cors==4.0.0         # CORS support for cross-origin requests
+
+# Note: sqlite3 is included in Python standard library
+# No additional packages needed for RAG system implementation
+

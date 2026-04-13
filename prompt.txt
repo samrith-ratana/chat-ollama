@@ -1,0 +1,64 @@
+## 🔧 **Final Optimized Prompt (Ollama-Based Chatbot)**
+
+> Design and build a clean, modern chatbot system using **Ollama** for local LLM inference.
+>
+> ### Core Requirements:
+>
+> 1. **Architecture & Structure**
+>
+>    * Use a well-structured architecture with clear separation:
+>
+>      * Frontend (chat UI)
+>      * Backend (API server)
+>      * Data layer (knowledge storage)
+>    * Ensure modular, scalable, and maintainable design
+> 2. **Ollama Integration**
+>
+>    * Use Ollama to run local models (e.g., LLaMA, Mistral)
+>    * Implement API calls to Ollama for generating responses
+>    * Optimize for low latency and efficient inference
+> 3. **Custom Data & Resources**
+>
+>    * Allow adding and managing custom knowledge sources:
+>
+>      * Text files, PDFs, FAQs, or database entries
+>    * Store embeddings or indexed data for fast retrieval
+> 4. **Self-Answering Capability (RAG System)**
+>
+>    * Implement a **Retrieval-Augmented Generation (RAG)** pipeline:
+>
+>      * Retrieve relevant data from knowledge base
+>      * Inject it into the prompt sent to Ollama
+>      * Generate accurate, context-aware responses
+> 5. **Algorithm Design**
+>
+>    * Include:
+>
+>      * Query processing
+>      * Semantic search (embeddings)
+>      * Context ranking
+>      * Response generation
+>    * Ensure high accuracy and relevance
+> 6. **Modern Chat UI**
+>
+>    * Build a clean, minimal chat interface
+>    * Features:
+>
+>      * Real-time messaging
+>      * Typing indicator
+>      * Message history
+>    * Responsive design (mobile + desktop)
+> 7. **Performance & Scalability**
+>
+>    * Efficient caching and indexing
+>    * Async processing
+>    * Ability to scale with larger datasets
+>
+> ---
+>
+> ### Bonus Features:
+>
+> * Conversation memory (context retention)
+> * Admin dashboard to upload/manage knowledge
+> * Multi-model support via Ollama
+> * API integration (external tools or services)

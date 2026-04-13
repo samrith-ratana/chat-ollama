@@ -1,0 +1,35 @@
+# Optional: If you want to run Ollama on your HOST instead of in Docker
+# Use this docker-compose file and run `ollama serve` on your host machine:
+#   ollama serve
+# Then start only the API container:
+#   docker-compose -f docker-compose.host-ollama.yml up
+
+version: '3.8'
+
+services:
+  chatbot-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chatbot-api
+    ports:
+      - "5000:5000"
+    environment:
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434  # Points to host Ollama
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+    networks:
+      - chatbot-network
+    volumes:
+      - ./index.html:/app/index.html
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  chatbot-network:
+    driver: bridge

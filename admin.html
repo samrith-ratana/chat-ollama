@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Ollama Chatbot Knowledge Base</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            font-size: 24px;
+        }
+        
+        .header nav a {
+            color: white;
+            margin-left: 20px;
+            text-decoration: none;
+            transition: opacity 0.3s;
+        }
+        
+        .header nav a:hover {
+            opacity: 0.8;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ddd;
+        }
+        
+        .tab-button {
+            padding: 10px 20px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 14px;
+            color: #666;
+            transition: all 0.3s;
+        }
+        
+        .tab-button.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        
+        .tab-button:hover {
+            color: #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card .label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="file"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="password"]:focus,
+        input[type="file"]:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 150px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        button.secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        button.secondary:hover {
+            background: #e0e0e0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        button.danger {
+            background: #e74c3c;
+        }
+        
+        button.danger:hover {
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+        }
+        
+        .documents-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .document-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            transition: box-shadow 0.3s;
+        }
+        
+        .document-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .document-card h3 {
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+        
+        .document-card .category {
+            display: inline-block;
+            background: #f0f0f0;
+            color: #666;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+        
+        .document-card .content-preview {
+            color: #666;
+            font-size: 13px;
+            line-height: 1.5;
+            margin-bottom: 15px;
+            max-height: 80px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .document-card .actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .document-card button {
+            flex: 1;
+            padding: 8px;
+            font-size: 12px;
+        }
+        
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .search-box input {
+            flex: 1;
+        }
+        
+        .search-box button {
+            flex: 0 0 auto;
+            width: 40px;
+            padding: 10px;
+        }
+        
+        .document-list {
+            list-style: none;
+        }
+        
+        .document-list li {
+            background: white;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .document-info h4 {
+            margin-bottom: 5px;
+            color: #333;
+        }
+        
+        .document-info .meta {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .alert.show {
+            display: block;
+        }
+        
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .alert.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .relevance-badge {
+            background: #667eea;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .header nav {
+                display: flex;
+                justify-content: center;
+                gap: 20px;
+            }
+            
+            .header nav a {
+                margin-left: 0;
+            }
+            
+            .documents-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📚 Knowledge Base Admin</h1>
+        <nav>
+            <a href="/">💬 Chat</a>
+            <a href="/admin.html">⚙️ Admin</a>
+        </nav>
+    </div>
+    
+    <div class="container">
+        <div class="tabs">
+            <button class="tab-button active" onclick="showTab('overview')">📊 Overview</button>
+            <button class="tab-button" onclick="showTab('add-document')">➕ Add Document</button>
+            <button class="tab-button" onclick="showTab('browse')">📖 Browse</button>
+            <button class="tab-button" onclick="showTab('search')">🔍 Search</button>
+            <button class="tab-button" onclick="showTab('upload')">📤 Upload File</button>
+        </div>
+        
+        <!-- Overview Tab -->
+        <div id="overview" class="tab-content active">
+            <h2>Knowledge Base Overview</h2>
+            <div id="statsContainer" class="stats-grid">
+                <div class="stat-card">
+                    <div class="value" id="docCount">0</div>
+                    <div class="label">Documents</div>
+                </div>
+                <div class="stat-card">
+                    <div class="value" id="wordCount">0</div>
+                    <div class="label">Indexed Words</div>
+                </div>
+            </div>
+            <div id="categoriesContainer"></div>
+            <button onclick="refreshStats()">Refresh Stats</button>
+        </div>
+        
+        <!-- Add Document Tab -->
+        <div id="add-document" class="tab-content">
+            <h2>Add New Document</h2>
+            <div id="addAlert" class="alert"></div>
+            <form onsubmit="addDocument(event)">
+                <div class="form-group">
+                    <label for="docTitle">Document Title *</label>
+                    <input type="text" id="docTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="docContent">Content *</label>
+                    <textarea id="docContent" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="docCategory">Category</label>
+                    <input type="text" id="docCategory" value="general" placeholder="e.g., FAQ, Documentation">
+                </div>
+                <div class="form-group">
+                    <label for="docTags">Tags (comma separated)</label>
+                    <input type="text" id="docTags" placeholder="e.g., python, api, tutorial">
+                </div>
+                <button type="submit">Add Document</button>
+            </form>
+        </div>
+        
+        <!-- Browse Tab -->
+        <div id="browse" class="tab-content">
+            <h2>Browse Documents</h2>
+            <div class="form-group">
+                <label for="categoryFilter">Filter by Category:</label>
+                <select id="categoryFilter" onchange="filterDocuments()">
+                    <option value="">All Categories</option>
+                </select>
+            </div>
+            <div id="documentsContainer" class="documents-grid"></div>
+        </div>
+        
+        <!-- Search Tab -->
+        <div id="search" class="tab-content">
+            <h2>Search Knowledge Base</h2>
+            <div class="search-box">
+                <input type="text" id="searchQuery" placeholder="Enter search query...">
+                <button onclick="searchKB()">Search</button>
+            </div>
+            <div id="searchAlert" class="alert"></div>
+            <div id="searchResults"></div>
+        </div>
+        
+        <!-- Upload File Tab -->
+        <div id="upload" class="tab-content">
+            <h2>Upload File</h2>
+            <div id="uploadAlert" class="alert"></div>
+            <form onsubmit="uploadFile(event)">
+                <div class="form-group">
+                    <label for="fileInput">Select File *</label>
+                    <input type="file" id="fileInput" accept=".txt,.md,.pdf" required>
+                </div>
+                <div class="form-group">
+                    <label for="uploadTitle">Document Title (optional)</label>
+                    <input type="text" id="uploadTitle" placeholder="Leave blank to use filename">
+                </div>
+                <div class="form-group">
+                    <label for="uploadCategory">Category</label>
+                    <input type="text" id="uploadCategory" value="general">
+                </div>
+                <button type="submit">Upload File</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api';
+        
+        // Tab management
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Load content based on tab
+            if (tabName === 'browse') {
+                loadDocuments();
+            } else if (tabName === 'overview') {
+                refreshStats();
+            }
+        }
+        
+        // Load and display statistics
+        async function refreshStats() {
+            try {
+                const response = await fetch(`${API_URL}/knowledge/stats`);
+                const data = await response.json();
+                
+                document.getElementById('docCount').textContent = data.total_documents;
+                document.getElementById('wordCount').textContent = data.total_indexed_words;
+                
+                // Display categories
+                const categoriesContainer = document.getElementById('categoriesContainer');
+                if (Object.keys(data.categories).length > 0) {
+                    let html = '<h3>Documents by Category:</h3><ul style="list-style: none;">';
+                    for (const [cat, count] of Object.entries(data.categories)) {
+                        html += `<li>🏷️ <strong>${cat}</strong>: ${count} documents</li>`;
+                    }
+                    html += '</ul>';
+                    categoriesContainer.innerHTML = html;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('overview', 'Failed to load statistics', 'error');
+            }
+        }
+        
+        // Load and display documents
+        async function loadDocuments() {
+            try {
+                const response = await fetch(`${API_URL}/knowledge/documents`);
+                const data = await response.json();
+                const container = document.getElementById('documentsContainer');
+                
+                // Update category filter
+                const categories = new Set(['All Categories']);
+                data.documents.forEach(doc => categories.add(doc.category));
+                
+                const categorySelect = document.getElementById('categoryFilter');
+                const selectedValue = categorySelect.value;
+                categorySelect.innerHTML = '<option value="">All Categories</option>';
+                categories.forEach(cat => {
+                    if (cat !== 'All Categories') {
+                        const option = document.createElement('option');
+                        option.value = cat;
+                        option.textContent = cat;
+                        categorySelect.appendChild(option);
+                    }
+                });
+                categorySelect.value = selectedValue;
+                
+                // Display documents
+                displayDocuments(data.documents, selectedValue);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+        
+        function displayDocuments(documents, filterCategory) {
+            const container = document.getElementById('documentsContainer');
+            const filtered = filterCategory ? 
+                documents.filter(doc => doc.category === filterCategory) : 
+                documents;
+            
+            if (filtered.length === 0) {
+                container.innerHTML = '<p>No documents found</p>';
+                return;
+            }
+            
+            container.innerHTML = filtered.map(doc => `
+                <div class="document-card">
+                    <h3>${escapeHtml(doc.title)}</h3>
+                    <span class="category">${escapeHtml(doc.category)}</span>
+                    <div class="content-preview">${escapeHtml(doc.content.substring(0, 150))}</div>
+                    <div class="actions">
+                        <button onclick="viewDocument('${doc.id}')" class="secondary">View</button>
+                        <button onclick="deleteDocument('${doc.id}', '${escapeHtml(doc.title)}')" class="danger">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function filterDocuments() {
+            loadDocuments();
+        }
+        
+        // Add new document
+        async function addDocument(event) {
+            event.preventDefault();
+            
+            const title = document.getElementById('docTitle').value;
+            const content = document.getElementById('docContent').value;
+            const category = document.getElementById('docCategory').value;
+            const tags = document.getElementById('docTags').value.split(',').map(t => t.trim()).filter(t => t);
+            
+            try {
+                const response = await fetch(`${API_URL}/knowledge/documents`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, content, category, tags })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert('add-document', `✓ Document added successfully!`, 'success');
+                    event.target.reset();
+                    setTimeout(loadDocuments, 1000);
+                } else {
+                    showAlert('add-document', data.error || 'Failed to add document', 'error');
+                }
+            } catch (error) {
+                showAlert('add-document', error.message, 'error');
+            }
+        }
+        
+        // Search knowledge base
+        async function searchKB() {
+            const query = document.getElementById('searchQuery').value.trim();
+            if (!query) return;
+            
+            try {
+                const response = await fetch(`${API_URL}/knowledge/search?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                
+                const resultsContainer = document.getElementById('searchResults');
+                if (data.results.length === 0) {
+                    resultsContainer.innerHTML = '<p>No results found</p>';
+                    return;
+                }
+                
+                resultsContainer.innerHTML = '<h3>Search Results:</h3>' + 
+                    data.results.map(result => `
+                    <div style="background: white; padding: 15px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 10px;">
+                        <h4>${escapeHtml(result.title)}</h4>
+                        <p style="color: #666; font-size: 13px; margin-bottom: 10px;">
+                            <span class="relevance-badge">Relevance: ${Math.round(result.relevance)}</span>
+                            <span class="category" style="margin-left: 10px;">${escapeHtml(result.category)}</span>
+                        </p>
+                        <p>${escapeHtml(result.content.substring(0, 300))}</p>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showAlert('search', error.message, 'error');
+            }
+        }
+        
+        // Delete document
+        async function deleteDocument(docId, title) {
+            if (!confirm(`Are you sure you want to delete "${title}"?`)) return;
+            
+            try {
+                const response = await fetch(`${API_URL}/knowledge/documents/${docId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    showAlert('browse', 'Document deleted', 'success');
+                    loadDocuments();
+                } else {
+                    showAlert('browse', 'Failed to delete document', 'error');
+                }
+            } catch (error) {
+                showAlert('browse', error.message, 'error');
+            }
+        }
+        
+        // Upload file
+        async function uploadFile(event) {
+            event.preventDefault();
+            
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('title', document.getElementById('uploadTitle').value || file.name);
+            formData.append('category', document.getElementById('uploadCategory').value);
+            
+            try {
+                const response = await fetch(`${API_URL}/knowledge/upload-file`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert('upload', `✓ File uploaded successfully!`, 'success');
+                    event.target.reset();
+                    setTimeout(loadDocuments, 1000);
+                } else {
+                    showAlert('upload', data.error || 'Failed to upload file', 'error');
+                }
+            } catch (error) {
+                showAlert('upload', error.message, 'error');
+            }
+        }
+        
+        // View document details
+        async function viewDocument(docId) {
+            try {
+                const response = await fetch(`${API_URL}/knowledge/documents/${docId}`);
+                const data = await response.json();
+                
+                alert(`Title: ${data.title}\n\nCategory: ${data.category}\n\nContent:\n\n${data.content.substring(0, 500)}...`);
+            } catch (error) {
+                alert('Failed to load document');
+            }
+        }
+        
+        // Helper function
+        function showAlert(tabId, message, type) {
+            const alertId = tabId === 'add-document' ? 'addAlert' : 
+                           tabId === 'upload' ? 'uploadAlert' :
+                           tabId === 'search' ? 'searchAlert' : 'addAlert';
+            
+            const alertElement = document.getElementById(alertId);
+            alertElement.textContent = message;
+            alertElement.className = `alert show ${type}`;
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    alertElement.classList.remove('show');
+                }, 3000);
+            }
+        }
+        
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+        
+        // Load initial data
+        window.addEventListener('load', refreshStats);
+    </script>
+</body>
+</html>
