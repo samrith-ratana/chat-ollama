@@ -18,10 +18,13 @@ services:
       - OLLAMA_BASE_URL=http://host.docker.internal:11434  # Points to host Ollama
       - FLASK_ENV=production
       - PYTHONUNBUFFERED=1
+      - KNOWLEDGE_DB_PATH=/app/data/knowledge.db
     networks:
       - chatbot-network
     volumes:
-      - ./index.html:/app/index.html
+      - chatbot_data:/app/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
@@ -33,3 +36,7 @@ services:
 networks:
   chatbot-network:
     driver: bridge
+
+volumes:
+  chatbot_data:
+    driver: local

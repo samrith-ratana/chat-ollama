@@ -13,14 +13,6 @@ services:
       - ollama_data:/root/.ollama
     networks:
       - chatbot-network
-    # GPU support (uncomment if you have GPU)
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: 1
-    #           capabilities: [gpu]
 
   # Chatbot API service
   chatbot-api:
@@ -36,10 +28,11 @@ services:
       - OLLAMA_BASE_URL=http://ollama:11434
       - FLASK_ENV=production
       - PYTHONUNBUFFERED=1
+      - KNOWLEDGE_DB_PATH=/app/data/knowledge.db
     networks:
       - chatbot-network
     volumes:
-      - ./index.html:/app/index.html
+      - chatbot_data:/app/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
@@ -54,4 +47,6 @@ networks:
 
 volumes:
   ollama_data:
+    driver: local
+  chatbot_data:
     driver: local

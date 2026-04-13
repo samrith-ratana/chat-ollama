@@ -4,6 +4,7 @@ WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements
@@ -12,20 +13,21 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application files
-COPY chatbot_api.py .
-COPY index.html .
+# Copy source code and data folders
+COPY src/ ./src/
+# Ensure data directories exist
+RUN mkdir -p data/conversations data/models logs
 
 # Expose port
 EXPOSE 5000
 
 # Set environment variables
-ENV FLASK_APP=chatbot_api.py
+ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:5000/api/health', timeout=5)" || exit 1
+    CMD curl -f http://localhost:5000/api/health || exit 1
 
-# Run the API
-CMD ["python", "chatbot_api.py"]
+# Run the API via module
+CMD ["python", "-m", "src.api.app"]
