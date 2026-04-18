@@ -16,13 +16,18 @@ def create_app(config_class=Config):
     config_class.init_app(app)
     
     # Initialize services
-    ollama_service = OllamaService(app.config['OLLAMA_BASE_URL'])
+    ollama_service = OllamaService(
+        app.config['OLLAMA_BASE_URL'],
+        request_timeout=app.config['OLLAMA_REQUEST_TIMEOUT']
+    )
     knowledge_service = KnowledgeService(app.config['KNOWLEDGE_DB_PATH'])
     chat_service = ChatService(
         ollama_service, 
         knowledge_service, 
         max_context_length=app.config['MAX_CONTEXT_LENGTH'],
-        num_docs=app.config['NUM_RETRIEVED_DOCS']
+        num_docs=app.config['NUM_RETRIEVED_DOCS'],
+        max_history_messages=app.config['MAX_HISTORY_MESSAGES'],
+        min_relevance_score=app.config['MIN_RAG_RELEVANCE']
     )
     
     # Register services in app config for routes to access

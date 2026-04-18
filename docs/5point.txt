@@ -1,0 +1,5 @@
+1. Upgrade backend chat behavior for customer support: add a strong system prompt, safer/friendlier reply policy, confidence-aware fallback, and better conversation history trimming.
+2. Improve RAG quality: better tokenization/scoring, phrase/title weighting, and richer document metadata for sources.
+3. Complete missing API endpoints used by the admin/dashboard flow (search, list/get/delete docs, upload file, conversation endpoints), plus better validation and health checks.
+4. Fix web chat/admin integration mismatches so retrieved sources and KB actions work reliably.
+5. Add basic unit tests for knowledge/chat services and run them.

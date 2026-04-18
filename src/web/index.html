@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -208,10 +208,10 @@
     <div class="container">
         <div class="header">
             <div>
-                <h1>🤖 Ollama Chatbot</h1>
+                <h1>ðŸ¤– Ollama Chatbot</h1>
                 <p>Powered by Ollama - Local AI Chat with RAG</p>
             </div>
-            <a href="/admin.html" style="color: white; text-decoration: none; font-size: 14px; opacity: 0.9;">📚 Knowledge Base →</a>
+            <a href="/admin.html" style="color: white; text-decoration: none; font-size: 14px; opacity: 0.9;">ðŸ“š Knowledge Base â†’</a>
         </div>
         
         <div class="chat-container" id="chatContainer">
@@ -241,151 +241,161 @@
         </div>
     </div>
 
-    <script>
+            <script>
         const chatContainer = document.getElementById('chatContainer');
         const messageInput = document.getElementById('messageInput');
         const sendBtn = document.getElementById('sendBtn');
         const modelSelect = document.getElementById('modelSelect');
-        
-        const API_URL = 'http://localhost:5000/api';
-        let conversationId = 'default';
+
+        const API_URL = `${window.location.origin}/api`;
+        let conversationId = (window.crypto && window.crypto.randomUUID)
+            ? window.crypto.randomUUID()
+            : `conv-${Date.now()}`;
         let isLoading = false;
-        
-        // Check Ollama health on load
+
         window.addEventListener('load', checkHealth);
-        
-        function checkHealth() {
-            fetch(`${API_URL}/health`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === 'healthy') {
-                        loadModels();
-                    } else {
-                        showStatus('❌ Ollama is not running. Start Ollama first.', 'error');
-                    }
-                })
-                .catch(() => {
-                    showStatus('❌ Cannot connect to API. Make sure it\'s running on port 5000.', 'error');
+
+        async function checkHealth() {
+            try {
+                const response = await fetch(`${API_URL}/health`);
+                const data = await response.json();
+                if (!response.ok || data.status !== 'healthy') {
+                    showStatus('Cannot connect to Ollama. Start the API and Ollama first.', 'error');
+                    return;
+                }
+                await loadModels();
+            } catch (_) {
+                showStatus('Cannot connect to API. Verify the server is running.', 'error');
+            }
+        }
+
+        async function loadModels() {
+            try {
+                const response = await fetch(`${API_URL}/models`);
+                const data = await response.json();
+                if (!Array.isArray(data.models) || data.models.length === 0) {
+                    return;
+                }
+
+                modelSelect.innerHTML = '';
+                data.models.forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model;
+                    option.textContent = model;
+                    modelSelect.appendChild(option);
                 });
+            } catch (error) {
+                console.error('Failed to load models:', error);
+            }
         }
-        
-        function loadModels() {
-            fetch(`${API_URL}/models`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.models && data.models.length > 0) {
-                        const select = document.getElementById('modelSelect');
-                        select.innerHTML = '';
-                        data.models.forEach(model => {
-                            const option = document.createElement('option');
-                            option.value = model;
-                            option.textContent = model;
-                            select.appendChild(option);
-                        });
-                    }
-                })
-                .catch(console.error);
-        }
-        
-        function sendMessage() {
+
+        async function sendMessage() {
             const message = messageInput.value.trim();
             if (!message || isLoading) return;
-            
+
             isLoading = true;
             sendBtn.disabled = true;
             messageInput.disabled = true;
-            
-            // Add user message to chat
+
             addMessage(message, 'user');
             messageInput.value = '';
-            
-            // Show loading indicator
-            const loadingId = addMessage('', 'bot');
-            const loadingElement = document.getElementById(loadingId);
+
+            const loadingElement = addMessage('', 'bot');
             loadingElement.innerHTML = '<div class="loading"><span></span><span></span><span></span></div>';
-            
-            // Send to API
+
             const model = modelSelect.value;
             const useRag = document.getElementById('ragToggle').checked;
-            
-            fetch(`${API_URL}/chat`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    message: message,
-                    model: model,
-                    conversation_id: conversationId,
-                    use_rag: useRag
-                })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.error) {
-                    loadingElement.textContent = '❌ Error: ' + data.error;
-                    loadingElement.style.color = '#c00';
-                } else {
-                    loadingElement.textContent = data.response;
-                    
-                    // Display retrieved documents if RAG is enabled
-                    if (data.rag_enabled && data.retrieved_documents && data.retrieved_documents.length > 0) {
-                        const docsDiv = document.createElement('div');
-                        docsDiv.style.cssText = 'font-size: 12px; color: #999; margin-top: 10px; padding-top: 10px; border-top: 1px solid #e0e0e0;';
-                        docsDiv.innerHTML = '<strong>📚 Retrieved from Knowledge Base:</strong><br>' + 
-                            data.retrieved_documents.map(doc => 
-                                `• ${doc.title} (${doc.category}) [${Math.round(doc.relevance)}]`
-                            ).join('<br>');
-                        loadingElement.parentElement.appendChild(docsDiv);
-                    }
+
+            try {
+                const response = await fetch(`${API_URL}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        model: model,
+                        conversation_id: conversationId,
+                        use_rag: useRag
+                    })
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || `Request failed (${response.status})`);
                 }
-            })
-            .catch(error => {
-                loadingElement.textContent = '❌ Connection error: ' + error.message;
+
+                loadingElement.textContent = data.response || 'No response generated.';
+
+                if (data.rag_applied && Array.isArray(data.retrieved_documents) && data.retrieved_documents.length > 0) {
+                    const docsDiv = document.createElement('div');
+                    docsDiv.style.cssText = 'font-size: 12px; color: #777; margin-top: 10px; padding-top: 10px; border-top: 1px solid #e0e0e0;';
+
+                    const heading = document.createElement('div');
+                    heading.style.fontWeight = '600';
+                    heading.textContent = 'Knowledge sources used:';
+                    docsDiv.appendChild(heading);
+
+                    data.retrieved_documents.forEach(doc => {
+                        const line = document.createElement('div');
+                        const relevance = Number.isFinite(doc.relevance)
+                            ? Math.round(doc.relevance)
+                            : doc.relevance;
+                        line.textContent = `- ${doc.title || 'Untitled'} (${doc.category || 'general'}) [${relevance}]`;
+                        docsDiv.appendChild(line);
+                    });
+
+                    if (typeof data.confidence === 'number') {
+                        const confidence = document.createElement('div');
+                        confidence.style.marginTop = '6px';
+                        confidence.textContent = `Support confidence: ${Math.round(data.confidence * 100)}%`;
+                        docsDiv.appendChild(confidence);
+                    }
+                    loadingElement.parentElement.appendChild(docsDiv);
+                }
+            } catch (error) {
+                loadingElement.textContent = `Error: ${error.message}`;
                 loadingElement.style.color = '#c00';
-            })
-            .finally(() => {
+            } finally {
                 isLoading = false;
                 sendBtn.disabled = false;
                 messageInput.disabled = false;
                 messageInput.focus();
-            });
+            }
         }
-        
+
         function addMessage(text, sender) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${sender}`;
-            const id = 'msg-' + Date.now();
-            messageDiv.id = id;
-            
+
             const contentDiv = document.createElement('div');
             contentDiv.className = 'message-content';
             contentDiv.textContent = text;
-            
+
             messageDiv.appendChild(contentDiv);
             chatContainer.appendChild(messageDiv);
             chatContainer.scrollTop = chatContainer.scrollHeight;
-            
-            return id;
+            return contentDiv;
         }
-        
+
         function showStatus(message, type) {
             const status = document.createElement('div');
             status.className = `status ${type}`;
             status.textContent = message;
             chatContainer.appendChild(status);
         }
-        
+
         function handleKeyPress(event) {
             if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
                 sendMessage();
             }
         }
-        
+
         function changeModel() {
-            // Model changed - no action needed, will be used in next message
+            // Model changed - no action needed, will be used in next message.
         }
     </script>
 </body>
 </html>
+
+

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -361,25 +361,26 @@
 </head>
 <body>
     <div class="header">
-        <h1>📚 Knowledge Base Admin</h1>
+        <h1>ðŸ“š Knowledge Base Admin</h1>
         <nav>
-            <a href="/">💬 Chat</a>
-            <a href="/admin.html">⚙️ Admin</a>
+            <a href="/">ðŸ’¬ Chat</a>
+            <a href="/admin.html">âš™ï¸ Admin</a>
         </nav>
     </div>
     
     <div class="container">
         <div class="tabs">
-            <button class="tab-button active" onclick="showTab('overview')">📊 Overview</button>
-            <button class="tab-button" onclick="showTab('add-document')">➕ Add Document</button>
-            <button class="tab-button" onclick="showTab('browse')">📖 Browse</button>
-            <button class="tab-button" onclick="showTab('search')">🔍 Search</button>
-            <button class="tab-button" onclick="showTab('upload')">📤 Upload File</button>
+            <button class="tab-button active" onclick="showTab('overview', this)">ðŸ“Š Overview</button>
+            <button class="tab-button" onclick="showTab('add-document', this)">âž• Add Document</button>
+            <button class="tab-button" onclick="showTab('browse', this)">ðŸ“– Browse</button>
+            <button class="tab-button" onclick="showTab('search', this)">ðŸ” Search</button>
+            <button class="tab-button" onclick="showTab('upload', this)">ðŸ“¤ Upload File</button>
         </div>
         
         <!-- Overview Tab -->
         <div id="overview" class="tab-content active">
             <h2>Knowledge Base Overview</h2>
+            <div id='overviewAlert' class='alert'></div>
             <div id="statsContainer" class="stats-grid">
                 <div class="stat-card">
                     <div class="value" id="docCount">0</div>
@@ -422,6 +423,7 @@
         <!-- Browse Tab -->
         <div id="browse" class="tab-content">
             <h2>Browse Documents</h2>
+            <div id='browseAlert' class='alert'></div>
             <div class="form-group">
                 <label for="categoryFilter">Filter by Category:</label>
                 <select id="categoryFilter" onchange="filterDocuments()">
@@ -465,10 +467,10 @@
     </div>
 
     <script>
-        const API_URL = 'http://localhost:5000/api';
+        const API_URL = `${window.location.origin}/api`;
         
         // Tab management
-        function showTab(tabName) {
+        function showTab(tabName, buttonEl) {
             // Hide all tabs
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.remove('active');
@@ -479,7 +481,9 @@
             
             // Show selected tab
             document.getElementById(tabName).classList.add('active');
-            event.target.classList.add('active');
+            if (buttonEl) {
+                buttonEl.classList.add('active');
+            }
             
             // Load content based on tab
             if (tabName === 'browse') {
@@ -494,16 +498,19 @@
             try {
                 const response = await fetch(`${API_URL}/knowledge/stats`);
                 const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to load statistics');
+                }
                 
                 document.getElementById('docCount').textContent = data.total_documents;
-                document.getElementById('wordCount').textContent = data.total_indexed_words;
+                document.getElementById('wordCount').textContent = data.total_indexed_words || 0;
                 
                 // Display categories
                 const categoriesContainer = document.getElementById('categoriesContainer');
-                if (Object.keys(data.categories).length > 0) {
+                if (data.categories && Object.keys(data.categories).length > 0) {
                     let html = '<h3>Documents by Category:</h3><ul style="list-style: none;">';
                     for (const [cat, count] of Object.entries(data.categories)) {
-                        html += `<li>🏷️ <strong>${cat}</strong>: ${count} documents</li>`;
+                        html += `<li>ðŸ·ï¸ <strong>${cat}</strong>: ${count} documents</li>`;
                     }
                     html += '</ul>';
                     categoriesContainer.innerHTML = html;
@@ -519,6 +526,9 @@
             try {
                 const response = await fetch(`${API_URL}/knowledge/documents`);
                 const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to load documents');
+                }
                 const container = document.getElementById('documentsContainer');
                 
                 // Update category filter
@@ -592,7 +602,7 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    showAlert('add-document', `✓ Document added successfully!`, 'success');
+                    showAlert('add-document', `âœ“ Document added successfully!`, 'success');
                     event.target.reset();
                     setTimeout(loadDocuments, 1000);
                 } else {
@@ -611,6 +621,9 @@
             try {
                 const response = await fetch(`${API_URL}/knowledge/search?q=${encodeURIComponent(query)}`);
                 const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to search knowledge base');
+                }
                 
                 const resultsContainer = document.getElementById('searchResults');
                 if (data.results.length === 0) {
@@ -676,7 +689,7 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    showAlert('upload', `✓ File uploaded successfully!`, 'success');
+                    showAlert('upload', `âœ“ File uploaded successfully!`, 'success');
                     event.target.reset();
                     setTimeout(loadDocuments, 1000);
                 } else {
@@ -692,6 +705,9 @@
             try {
                 const response = await fetch(`${API_URL}/knowledge/documents/${docId}`);
                 const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to load document');
+                }
                 
                 alert(`Title: ${data.title}\n\nCategory: ${data.category}\n\nContent:\n\n${data.content.substring(0, 500)}...`);
             } catch (error) {
@@ -703,7 +719,9 @@
         function showAlert(tabId, message, type) {
             const alertId = tabId === 'add-document' ? 'addAlert' : 
                            tabId === 'upload' ? 'uploadAlert' :
-                           tabId === 'search' ? 'searchAlert' : 'addAlert';
+                           tabId === 'search' ? 'searchAlert' :
+                           tabId === 'browse' ? 'browseAlert' :
+                           tabId === 'overview' ? 'overviewAlert' : 'addAlert';
             
             const alertElement = document.getElementById(alertId);
             alertElement.textContent = message;
@@ -732,3 +750,4 @@
     </script>
 </body>
 </html>
+
